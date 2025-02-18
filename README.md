@@ -25,7 +25,7 @@ Ensure you have the following installed:
 ### Cloning the Repository
 
 ```sh
-git clone https://github.com/yourusername/SolarSystemSimulation.git
+git clone https://github.com/n1k0m0/SolarSystemSimulation
 cd SolarSystemSimulation
 ```
 
@@ -66,12 +66,12 @@ Alternatively, you can execute the compiled binary from the **bin** directory.
 
 ```
 SolarSystemSimulation/
-¦-- Program.cs               # Entry point for the simulation
-¦-- SolarSystemWindow.cs     # Handles rendering and user interaction
-¦-- AstronomicalBody.cs      # Defines celestial bodies and physics calculations
-¦-- Textures/                # Folder containing planet textures
-¦-- LICENSE                  # Licensing information
-¦-- README.md                # This file
+Â¦-- Program.cs               # Entry point for the simulation
+Â¦-- SolarSystemWindow.cs     # Handles rendering and user interaction
+Â¦-- AstronomicalBody.cs      # Defines celestial bodies and physics calculations
+Â¦-- Textures/                # Folder containing planet textures
+Â¦-- LICENSE                  # Licensing information
+Â¦-- README.md                # This file
 ```
 
 ## License
