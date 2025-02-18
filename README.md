@@ -26,30 +26,7 @@ Ensure you have the following installed:
 
 ```sh
 git clone https://github.com/n1k0m0/SolarSystemSimulation
-cd SolarSystemSimulation
 ```
-
-### Building the Project
-
-1. Open the project in **Visual Studio** or **JetBrains Rider**.
-2. Restore dependencies using:
-   ```sh
-   dotnet restore
-   ```
-3. Build the solution:
-   ```sh
-   dotnet build
-   ```
-
-### Running the Simulation
-
-To start the simulation, run:
-
-```sh
-dotnet run
-```
-
-Alternatively, you can execute the compiled binary from the **bin** directory.
 
 ## Usage
 
