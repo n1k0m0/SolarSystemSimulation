@@ -40,6 +40,7 @@ namespace SolarSystemSimulation
 
         private bool _showData = true;
         private bool _showBackground = true;
+        private bool _showLabels = false;
 
         /// <summary>
         /// Creates a new solar system window with the specified width, height, mode, and title
@@ -384,6 +385,10 @@ namespace SolarSystemSimulation
             {
                 _showBackground = !_showBackground;
             }
+            else if (keyboardEventArgs.Key == Key.F4)
+            {
+                _showLabels = !_showLabels;
+            }
         }
 
         /// <summary>
@@ -433,57 +438,74 @@ namespace SolarSystemSimulation
         /// <param name="height"></param>
         private void RenderText(string text, Font font, Color textColor, Color backgroundColor, float x, float y, float width, float height)
         {
-            Bitmap bmp = new Bitmap((int)width, (int)height);
-            Graphics gfx = Graphics.FromImage(bmp);
-            gfx.Clear(backgroundColor);
-            gfx.TextRenderingHint = System.Drawing.Text.TextRenderingHint.SystemDefault;
-            gfx.DrawString(text, font, new SolidBrush(textColor), new PointF(5, 5));
+            using (Bitmap bmp = new Bitmap((int)width, (int)height, System.Drawing.Imaging.PixelFormat.Format32bppArgb))
+            {
+                using (Graphics gfx = Graphics.FromImage(bmp))
+                {
+                    gfx.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    gfx.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
-            BitmapData data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
-                ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                    gfx.Clear(Color.FromArgb(0, backgroundColor));
 
-            int textureId = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, textureId);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bmp.Width, bmp.Height,
-                0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+                    using (SolidBrush brush = new SolidBrush(textColor))
+                    {
+                       gfx.DrawString(text, font, brush, new PointF(5, 5));
+                    }
+                }
 
-            bmp.UnlockBits(data);
-            bmp.Dispose();
-            gfx.Dispose();
+                BitmapData data = bmp.LockBits(
+                    new Rectangle(0, 0, bmp.Width, bmp.Height),
+                    ImageLockMode.ReadOnly,
+                    System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Clamp);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Clamp);
+                int textureId = GL.GenTexture();
+                GL.BindTexture(TextureTarget.Texture2D, textureId);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bmp.Width, bmp.Height,
+                    0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+                bmp.UnlockBits(data);
 
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.PushMatrix();
-            GL.LoadIdentity();
-            GL.Ortho(0, Width, Height, 0, -1, 1);
+                // Enable alpha blending
+                GL.Enable(EnableCap.Blend);
+                GL.Disable(EnableCap.DepthTest);
 
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
-            GL.LoadIdentity();
+                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-            GL.Enable(EnableCap.Texture2D);
-            GL.BindTexture(TextureTarget.Texture2D, textureId);
-            GL.Color3(1.0f, 1.0f, 1.0f);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
 
-            GL.Begin(PrimitiveType.Quads);
-            GL.TexCoord2(0, 0); GL.Vertex2(x, y);
-            GL.TexCoord2(1, 0); GL.Vertex2(x + width, y);
-            GL.TexCoord2(1, 1); GL.Vertex2(x + width, y + height);
-            GL.TexCoord2(0, 1); GL.Vertex2(x, y + height);
-            GL.End();
+                // Setup 2D orthographic projection
+                GL.MatrixMode(MatrixMode.Projection);
+                GL.PushMatrix();
+                GL.LoadIdentity();
+                GL.Ortho(0, Width, Height, 0, -1, 1);
 
-            GL.Disable(EnableCap.Texture2D);
+                GL.MatrixMode(MatrixMode.Modelview);
+                GL.PushMatrix();
+                GL.LoadIdentity();
 
-            GL.PopMatrix();
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.PopMatrix();
-            GL.MatrixMode(MatrixMode.Modelview);
+                GL.Enable(EnableCap.Texture2D);
+                GL.BindTexture(TextureTarget.Texture2D, textureId);
 
-            GL.DeleteTexture(textureId);
+                GL.Begin(PrimitiveType.Quads);
+                GL.TexCoord2(0, 0); GL.Vertex2(x, y);
+                GL.TexCoord2(1, 0); GL.Vertex2(x + width, y);
+                GL.TexCoord2(1, 1); GL.Vertex2(x + width, y + height);
+                GL.TexCoord2(0, 1); GL.Vertex2(x, y + height);
+                GL.End();
+
+                GL.Disable(EnableCap.Texture2D);
+                GL.Disable(EnableCap.Blend);
+                GL.Enable(EnableCap.DepthTest);
+
+                GL.PopMatrix();
+                GL.MatrixMode(MatrixMode.Projection);
+                GL.PopMatrix();
+                GL.MatrixMode(MatrixMode.Modelview);
+
+                GL.DeleteTexture(textureId);
+            }
         }
 
         /// <summary>
@@ -537,14 +559,89 @@ namespace SolarSystemSimulation
                 ShowData(fps);
             }
 
+            if (_showLabels)
+            {
+                RenderAstronomicalBodyLabels();
+            }
+
             // Draw each body as a sphere
             foreach (AstronomicalBody body in _astronomicalBodies)
             {
                 body.DrawTexturedBody(_scale);
-            }
+            }            
 
             SwapBuffers();
 
+        }
+
+        private void RenderAstronomicalBodyLabels()
+        {
+            float zoomScale = 4000000f / Math.Abs(_zoom);
+
+            Font font = new Font("Arial", 10f * zoomScale, FontStyle.Regular, GraphicsUnit.Pixel);
+            Color textColor = Color.White;
+            Color backgroundColor = Color.FromArgb(0, 0, 0, 0); // Transparent
+
+            foreach (AstronomicalBody body in _astronomicalBodies)
+            {
+                float radius = (float)(body.Radius * _scale);
+
+                Vector3 centerWorld = new Vector3(
+                    (float)(body.X * _scale),
+                    (float)(body.Y * _scale),
+                    (float)(body.Z * _scale));
+
+                Vector3 bottomWorld = new Vector3(
+                    centerWorld.X,
+                    centerWorld.Y - radius,
+                    centerWorld.Z);
+
+                Matrix4 projection, modelview;
+                GL.GetFloat(GetPName.ProjectionMatrix, out projection);
+                GL.GetFloat(GetPName.ModelviewMatrix, out modelview);
+
+                Vector4 centerClip = Vector4.Transform(new Vector4(centerWorld, 1f), modelview);
+                centerClip = Vector4.Transform(centerClip, projection);
+
+                Vector4 bottomClip = Vector4.Transform(new Vector4(bottomWorld, 1f), modelview);
+                bottomClip = Vector4.Transform(bottomClip, projection);
+
+                if (centerClip.W <= 0 || bottomClip.W <= 0)
+                    continue;
+
+                Vector3 ndcCenter = new Vector3(centerClip.X, centerClip.Y, centerClip.Z) / centerClip.W;
+                Vector3 ndcBottom = new Vector3(bottomClip.X, bottomClip.Y, bottomClip.Z) / bottomClip.W;
+
+                float screenX = ((ndcCenter.X + 1f) / 2f) * Width;
+                float screenYCenter = ((1f - ndcCenter.Y) / 2f) * Height;
+                float screenYBottom = ((1f - ndcBottom.Y) / 2f) * Height;
+
+                float screenRadius = Math.Abs(screenYBottom - screenYCenter);
+                float verticalOffset = screenRadius + 5f * zoomScale;
+                float labelY = (float)Math.Round(screenYCenter + verticalOffset);
+
+                // Measure actual text width/height
+                SizeF textSize;
+                using (Bitmap tempBmp = new Bitmap(1, 1))
+                using (Graphics g = Graphics.FromImage(tempBmp))
+                {
+                    textSize = g.MeasureString(body.Name, font);
+                }
+
+                float labelWidth = textSize.Width;
+                float labelHeight = textSize.Height;
+                float labelX = (float)Math.Round(screenX - labelWidth / 2f);
+
+                RenderText(
+                    body.Name,
+                    font,
+                    textColor,
+                    backgroundColor,
+                    labelX,
+                    labelY,
+                    labelWidth,
+                    labelHeight);
+            }
         }
 
         /// <summary>
@@ -615,7 +712,7 @@ namespace SolarSystemSimulation
             //Render text
             Font textFont = new Font("Arial", 10);
             Color textColor = Color.White;
-            Color backgroundColor = Color.Black;
+            Color backgroundColor = Color.FromArgb(0, 0, 0, 0); // Fully transparent
 
             string text = string.Format("FPS: {0}\n\nSimulation time: {1} years, {2} days, {3} hours, {4} minutes\nSimulation speed: {5}\n\n{6}\n{7}\n{8}", fps, years, days, hours, minutes, _speed.ToString("0.###"), distanceStringBuilder.ToString(), speedStringBuilder.ToString(), positionStringBuilder.ToString());
             RenderText(text, textFont, textColor, backgroundColor, 0, 0, 450, 750);

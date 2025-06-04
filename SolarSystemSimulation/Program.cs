@@ -31,8 +31,15 @@ namespace SolarSystemSimulation
         /// <param name="args"></param>
         public static void Main(string[] args)
         {
+            var graphicsMode = new GraphicsMode(
+                new ColorFormat(32), // 8 bits each for RGBA
+                24,                  // 24-bit depth buffer
+                8,                   // 8-bit stencil buffer
+                4                   // 0x MSAA (or 4 for anti-aliasing)
+            );
+
             // Create a window
-            using (SolarSystemWindow window = new SolarSystemWindow(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height, GraphicsMode.Default, "Solar System Simulation"))
+            using (SolarSystemWindow window = new SolarSystemWindow(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height, graphicsMode, "Solar System Simulation"))
             {
                 window.WindowState = WindowState.Fullscreen;
                 window.CursorVisible = false;

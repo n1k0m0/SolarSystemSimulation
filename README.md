@@ -37,6 +37,7 @@ git clone https://github.com/n1k0m0/SolarSystemSimulation
 - **F1:** Reset the simulation.
 - **F2:** Toggle planetary data display.
 - **F3:** Toggle background.
+- **F4:** Toggle labels.
 - **Escape:** Exit the simulation.
 
 ## Project Structure
