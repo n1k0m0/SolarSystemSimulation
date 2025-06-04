@@ -465,10 +465,9 @@ namespace SolarSystemSimulation
                     0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
                 bmp.UnlockBits(data);
 
-                // Enable alpha blending
+                // Enable alpha blending and disable depth test
                 GL.Enable(EnableCap.Blend);
                 GL.Disable(EnableCap.DepthTest);
-
                 GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
@@ -497,9 +496,11 @@ namespace SolarSystemSimulation
                 GL.End();
 
                 GL.Disable(EnableCap.Texture2D);
-                GL.Disable(EnableCap.Blend);
-                GL.Enable(EnableCap.DepthTest);
 
+                //enable depth test and disable alpha blending
+                GL.Enable(EnableCap.DepthTest);
+                GL.Disable(EnableCap.Blend);
+                
                 GL.PopMatrix();
                 GL.MatrixMode(MatrixMode.Projection);
                 GL.PopMatrix();
@@ -555,24 +556,26 @@ namespace SolarSystemSimulation
 
             _simulatedSeconds += time * 10000;
 
-            if (_showData)
+            // Draw each body as a sphere
+            foreach (AstronomicalBody body in _astronomicalBodies)
             {
-                ShowData(fps);
+                body.DrawTexturedBody(_scale);
             }
 
+            //render labels
             if (_showLabels)
             {
                 RenderAstronomicalBodyLabels();
             }
 
-            // Draw each body as a sphere
-            foreach (AstronomicalBody body in _astronomicalBodies)
+
+            //show information on the left side
+            if (_showData)
             {
-                body.DrawTexturedBody(_scale);
-            }            
+                ShowData(fps);
+            }
 
             SwapBuffers();
-
         }
 
         private void RenderAstronomicalBodyLabels()

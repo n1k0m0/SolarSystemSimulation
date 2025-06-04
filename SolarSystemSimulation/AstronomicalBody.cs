@@ -201,7 +201,6 @@ namespace SolarSystemSimulation
             GL.Translate((float)X * scale, (float)Y * scale, (float)Z * scale);
             GL.Scale(10000, 10000, 10000);
 
-
             //rotate the AstronomicalBody
             GL.Rotate(90, 1, 0, 0);
             GL.Rotate(Rotation, 0, 1, 0);
