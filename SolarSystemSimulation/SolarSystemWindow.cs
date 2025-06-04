@@ -42,6 +42,10 @@ namespace SolarSystemSimulation
         private bool _showBackground = true;
         private bool _showLabels = false;
 
+        private float _solarSystemTiltX = 0f;
+        private float _solarSystemTiltY = 0f;
+        private float _solarSystemTiltZ = 0f;
+
         /// <summary>
         /// Creates a new solar system window with the specified width, height, mode, and title
         /// Also creates the solar system with the sun and the planets
@@ -69,6 +73,9 @@ namespace SolarSystemSimulation
             _showData = true;
             _showBackground = true;
             _showLabels = false;
+            _solarSystemTiltX = 0;
+            _solarSystemTiltY = 0;
+            _solarSystemTiltZ = 0;
 
             // Sun
             _astronomicalBodies.Add(new AstronomicalBody(
@@ -312,6 +319,10 @@ namespace SolarSystemSimulation
             if (keyboardEventArgs.Key == Key.Up)
             {
                 _zoom += 100;
+                if (_zoom > -100)
+                {
+                    _zoom = -100;
+                }
             }
             else if (keyboardEventArgs.Key == Key.Down)
             {
@@ -324,9 +335,57 @@ namespace SolarSystemSimulation
             else if (keyboardEventArgs.Key == Key.Right)
             {
                 _scale -= 0.1 * 1e-10;
-                if(_scale < 0.01 * 1e-9)
+                if (_scale < 0.01 * 1e-9)
                 {
                     _scale = 0.01 * 1e-9;
+                }
+            }
+            else if (keyboardEventArgs.Key == Key.W)
+            {
+                _solarSystemTiltX += 2f;
+                if(_solarSystemTiltX > 360)
+                {
+                    _solarSystemTiltX = 0;
+                }
+            }
+            else if (keyboardEventArgs.Key == Key.S)
+            {
+                _solarSystemTiltX -= 2f;
+                if (_solarSystemTiltX < 0)
+                {
+                    _solarSystemTiltX = 360;
+                }
+            }
+            else if (keyboardEventArgs.Key == Key.A)
+            {
+                _solarSystemTiltY += 2f;
+                if (_solarSystemTiltY > 360)
+                {
+                    _solarSystemTiltY = 0;
+                }
+            }
+            else if (keyboardEventArgs.Key == Key.D)
+            {
+                _solarSystemTiltY -= 2f;
+                if (_solarSystemTiltY < 0)
+                {
+                    _solarSystemTiltY = 360;
+                }
+            }
+            else if (keyboardEventArgs.Key == Key.Q)
+            {
+                _solarSystemTiltZ += 2f;
+                if (_solarSystemTiltZ > 360)
+                {
+                    _solarSystemTiltZ = 0;
+                }
+            }
+            else if (keyboardEventArgs.Key == Key.E)
+            {
+                _solarSystemTiltZ -= 2f;
+                if (_solarSystemTiltZ < 0)
+                {
+                    _solarSystemTiltZ = 360;
                 }
             }
             else if (keyboardEventArgs.Key == Key.PageUp)
@@ -561,6 +620,14 @@ namespace SolarSystemSimulation
 
             _simulatedSeconds += time * 10000;
 
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
+            GL.Translate(0, 0, _zoom);
+
+            GL.Rotate(_solarSystemTiltX, 1, 0, 0);
+            GL.Rotate(_solarSystemTiltY, 0, 1, 0);
+            GL.Rotate(_solarSystemTiltZ, 0, 0, 1);
+
             // Draw each body as a sphere
             foreach (AstronomicalBody body in _astronomicalBodies)
             {
@@ -675,6 +742,14 @@ namespace SolarSystemSimulation
             remainingSeconds %= (minutesPerHour * secondsPerMinute);
             long minutes = remainingSeconds / secondsPerMinute;
 
+            //create zoom, scale, tilt string
+            StringBuilder zoomScaleTiltStringBuilder = new StringBuilder();
+            zoomScaleTiltStringBuilder.AppendLine(string.Format("Zoom  : {0}", _zoom));
+            zoomScaleTiltStringBuilder.AppendLine(string.Format("Scale : {0}", _scale));
+            zoomScaleTiltStringBuilder.AppendLine(string.Format("Tilt X: {0}", _solarSystemTiltX));
+            zoomScaleTiltStringBuilder.AppendLine(string.Format("Tilt Y: {0}", _solarSystemTiltY));
+            zoomScaleTiltStringBuilder.Append(string.Format("Tilt Z: {0}", _solarSystemTiltZ));
+
             //Compute distance from sun to each planet
             StringBuilder distanceStringBuilder = new StringBuilder();
             foreach (AstronomicalBody body in _astronomicalBodies)
@@ -723,7 +798,7 @@ namespace SolarSystemSimulation
             Color textColor = Color.White;
             Color backgroundColor = Color.FromArgb(0, 0, 0, 0); // Fully transparent
 
-            string text = string.Format("FPS: {0}\n\nSimulation time: {1} years, {2} days, {3} hours, {4} minutes\nSimulation speed: {5}\n\n{6}\n{7}\n{8}", fps, years, days, hours, minutes, _speed.ToString("0.###"), distanceStringBuilder.ToString(), speedStringBuilder.ToString(), positionStringBuilder.ToString());
+            string text = string.Format("FPS: {0}\n\nSimulation time: {1} years, {2} days, {3} hours, {4} minutes\nSimulation speed: {5}\n\n{6}\n\n{7}\n{8}\n{9}", fps, years, days, hours, minutes, _speed.ToString("0.###"), zoomScaleTiltStringBuilder.ToString(), distanceStringBuilder.ToString(), speedStringBuilder.ToString(), positionStringBuilder.ToString());
             RenderText(text, textFont, textColor, backgroundColor, 0, 0, 450, 750);
         }
 
