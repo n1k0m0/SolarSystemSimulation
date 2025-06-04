@@ -68,6 +68,7 @@ namespace SolarSystemSimulation
             _zoom = -2000000;
             _showData = true;
             _showBackground = true;
+            _showLabels = false;
 
             // Sun
             _astronomicalBodies.Add(new AstronomicalBody(
