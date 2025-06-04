@@ -33,9 +33,9 @@ namespace SolarSystemSimulation
         private readonly List<AstronomicalBody> _astronomicalBodies = new List<AstronomicalBody>();
         private readonly Dictionary<string, int> _textures = new Dictionary<string, int>();
         private int _backgroundTextureId = 0;
-        private double _scale = 0.5 * 1e-6;
+        private double _scale = 0.5 * 1e-9;
         private double _simulatedSeconds = 0;
-        private float _zoom = -2000000;
+        private float _zoom = -2000;
         private float _speed = 1;
 
         private bool _showData = true;
@@ -62,10 +62,10 @@ namespace SolarSystemSimulation
         private void CreateSolarSystem()
         {
             _astronomicalBodies.Clear();
-            _scale = 0.5 * 1e-6;
+            _scale = 0.5 * 1e-9;
             _simulatedSeconds = 0;
             _speed = 1;
-            _zoom = -2000000;
+            _zoom = -2000;
             _showData = true;
             _showBackground = true;
             _showLabels = false;
@@ -310,19 +310,23 @@ namespace SolarSystemSimulation
         {
             if (keyboardEventArgs.Key == Key.Up)
             {
-                _zoom += 10000;
+                _zoom += 100;
             }
             else if (keyboardEventArgs.Key == Key.Down)
             {
-                _zoom -= 10000;
+                _zoom -= 100;
             }
             else if (keyboardEventArgs.Key == Key.Left)
             {
-                _scale += 0.1 * 1e-7;
+                _scale += 0.1 * 1e-10;
             }
             else if (keyboardEventArgs.Key == Key.Right)
             {
-                _scale -= 0.1 * 1e-7;
+                _scale -= 0.1 * 1e-10;
+                if(_scale < 0.01 * 1e-9)
+                {
+                    _scale = 0.01 * 1e-9;
+                }
             }
             else if (keyboardEventArgs.Key == Key.PageUp)
             {
@@ -580,7 +584,7 @@ namespace SolarSystemSimulation
 
         private void RenderAstronomicalBodyLabels()
         {
-            float zoomScale = 4000000f / Math.Abs(_zoom);
+            float zoomScale = 4000f / Math.Abs(_zoom);
 
             Font font = new Font("Arial", 10f * zoomScale, FontStyle.Regular, GraphicsUnit.Pixel);
             Color textColor = Color.White;

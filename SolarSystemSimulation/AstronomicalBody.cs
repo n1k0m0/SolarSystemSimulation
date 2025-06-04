@@ -199,7 +199,7 @@ namespace SolarSystemSimulation
         {
             GL.PushMatrix();
             GL.Translate((float)X * scale, (float)Y * scale, (float)Z * scale);
-            GL.Scale(10000, 10000, 10000);
+            GL.Scale(10, 10, 10);
 
             //rotate the AstronomicalBody
             GL.Rotate(90, 1, 0, 0);
