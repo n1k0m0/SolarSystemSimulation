@@ -45,6 +45,10 @@ namespace SolarSystemSimulation
         public double Rotation { get; set; } // In radians
         public double RotationPeriod { get; set; } // In Earth days
 
+        //enable/disable if this body has a ring
+        public bool HasRing { get; set; } = false; 
+
+
         // The vertices of the sphere
         private static readonly List<Vector3> _vertices = new List<Vector3>();
         private static int _stacks;
@@ -63,7 +67,7 @@ namespace SolarSystemSimulation
         /// <param name="vy"></param>
         /// <param name="vz"></param>
         /// <param name="rotationPeriod"></param>
-        public AstronomicalBody(string name, double mass, double radius, double x, double y, double z, double vx, double vy, double vz, double rotationPeriod)
+        public AstronomicalBody(string name, double mass, double radius, double x, double y, double z, double vx, double vy, double vz, double rotationPeriod, bool hasRing = false)
         {
             Name = name;
             Mass = mass;
@@ -76,6 +80,7 @@ namespace SolarSystemSimulation
             Vz = vz;
             RotationPeriod = rotationPeriod;
             Rotation = 0;
+            HasRing = hasRing;
             BuildSphere(1.0f, 64, 64);
         }
 
@@ -229,7 +234,33 @@ namespace SolarSystemSimulation
                     GL.Vertex3(v);
                 }
             }
+
             GL.End();
+
+            //draw ring           
+            if (HasRing)
+            {                
+                GL.Disable(EnableCap.Texture2D);
+                GL.Disable(EnableCap.Lighting);
+                GL.Color4(0.75f, 0.75f, 0.75f, 0.75f);
+
+                int segments = 128;
+                float innerRadius = 1.3f;
+                float outerRadius = 1.8f;
+
+                GL.Begin(PrimitiveType.QuadStrip);
+                for (int i = 0; i <= segments; i++)
+                {
+                    float angle = i * 2f * (float)Math.PI / segments;
+                    float x = (float)Math.Cos(angle);
+                    float y = (float)Math.Sin(angle);
+
+                    GL.Vertex3(x * outerRadius, 0, y * outerRadius);
+                    GL.Vertex3(x * innerRadius, 0, y * innerRadius);
+                }
+                GL.End();
+                GL.Enable(EnableCap.Lighting);
+            }                       
 
             GL.PopMatrix();
         }

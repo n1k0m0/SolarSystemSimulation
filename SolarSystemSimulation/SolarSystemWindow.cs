@@ -179,7 +179,8 @@ namespace SolarSystemSimulation
                 0,               // X velocity in m/s
                 9.69e3,          // Y velocity in m/s
                 0,               // Z velocity in m/s
-                38361.6          // Rotation period in s
+                38361.6,         // Rotation period in s
+                true             // Saturn has a ring
             ));
 
             // Uranus
