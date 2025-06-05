@@ -533,8 +533,9 @@ namespace SolarSystemSimulation
                 bmp.UnlockBits(data);
 
                 // Enable alpha blending and disable depth test
-                GL.Enable(EnableCap.Blend);
+                GL.Enable(EnableCap.Blend);                              
                 GL.Disable(EnableCap.DepthTest);
+
                 GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
@@ -566,7 +567,7 @@ namespace SolarSystemSimulation
                 GL.Disable(EnableCap.Texture2D);
 
                 //enable depth test and disable alpha blending
-                GL.Enable(EnableCap.DepthTest);
+                GL.Enable(EnableCap.DepthTest);              
                 GL.Disable(EnableCap.Blend);
                 
                 GL.PopMatrix();
@@ -626,6 +627,11 @@ namespace SolarSystemSimulation
             GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { 1f, 1f, 0.9f, 1f });
             GL.Light(LightName.Light0, LightParameter.Specular, new float[] { 1f, 1f, 1f, 1f });
 
+            if (_showLabels)
+            {
+                RenderAstronomicalBodyLabels();
+            }
+
             foreach (var body in _astronomicalBodies)
             {
                 // Optional: make Sun glow instead of reflect light
@@ -648,12 +654,7 @@ namespace SolarSystemSimulation
 
                 body.DrawTexturedBody(_scale);
             }
-
-            if (_showLabels)
-            {
-                RenderAstronomicalBodyLabels();
-            }
-
+           
             if (_showData)
             {
                 ShowData(fps);
@@ -664,53 +665,53 @@ namespace SolarSystemSimulation
 
         private void RenderAstronomicalBodyLabels()
         {
-            float zoomScale = 4000f / Math.Abs(_zoom);
+            Matrix4 projection, modelview;
+            GL.GetFloat(GetPName.ProjectionMatrix, out projection);
+            GL.GetFloat(GetPName.ModelviewMatrix, out modelview);
+            Matrix4 inverseModelview = modelview.Inverted();
 
-            Font font = new Font("Arial", 10f * zoomScale, FontStyle.Regular, GraphicsUnit.Pixel);
             Color textColor = Color.White;
-            Color backgroundColor = Color.FromArgb(0, 0, 0, 0); // Transparent
+            Color backgroundColor = Color.FromArgb(0, 0, 0, 0);
 
             foreach (AstronomicalBody body in _astronomicalBodies)
             {
                 float radius = (float)(body.Radius * _scale);
 
-                Vector3 centerWorld = new Vector3(
+                Vector3 worldPos = new Vector3(
                     (float)(body.X * _scale),
                     (float)(body.Y * _scale),
                     (float)(body.Z * _scale));
 
-                Vector3 bottomWorld = new Vector3(
-                    centerWorld.X,
-                    centerWorld.Y - radius,
-                    centerWorld.Z);
+                float eyeOffset = 10f;
+                Vector3 offsetEye = new Vector3(0, -eyeOffset, 0);
+                Vector3 downWorldOffset = Vector3.TransformNormal(offsetEye, inverseModelview);
+                Vector3 offsetWorld = worldPos + downWorldOffset;
 
-                Matrix4 projection, modelview;
-                GL.GetFloat(GetPName.ProjectionMatrix, out projection);
-                GL.GetFloat(GetPName.ModelviewMatrix, out modelview);
+                Vector4 eyeSpace = Vector4.Transform(new Vector4(offsetWorld, 1f), modelview);
+                float distance = Math.Abs(eyeSpace.Z);
+                float fontSize = 30000f / (distance + 1f);
+                if (fontSize < 1)
+                {
+                    continue;
+                }
+                if (fontSize > 50)
+                {
+                    fontSize = 50;
+                }
 
-                Vector4 centerClip = Vector4.Transform(new Vector4(centerWorld, 1f), modelview);
-                centerClip = Vector4.Transform(centerClip, projection);
+                Font font = new Font("Arial", fontSize, FontStyle.Regular, GraphicsUnit.Pixel);
 
-                Vector4 bottomClip = Vector4.Transform(new Vector4(bottomWorld, 1f), modelview);
-                bottomClip = Vector4.Transform(bottomClip, projection);
-
-                if (centerClip.W <= 0 || bottomClip.W <= 0)
+                Vector4 clip = Vector4.Transform(new Vector4(offsetWorld, 1f), modelview);
+                clip = Vector4.Transform(clip, projection);
+                if (clip.W <= 0)
                 {
                     continue;
                 }
 
-                Vector3 ndcCenter = new Vector3(centerClip.X, centerClip.Y, centerClip.Z) / centerClip.W;
-                Vector3 ndcBottom = new Vector3(bottomClip.X, bottomClip.Y, bottomClip.Z) / bottomClip.W;
+                Vector3 ndc = new Vector3(clip.X, clip.Y, clip.Z) / clip.W;
+                float screenX = ((ndc.X + 1f) / 2f) * Width;
+                float screenY = ((1f - ndc.Y) / 2f) * Height;
 
-                float screenX = ((ndcCenter.X + 1f) / 2f) * Width;
-                float screenYCenter = ((1f - ndcCenter.Y) / 2f) * Height;
-                float screenYBottom = ((1f - ndcBottom.Y) / 2f) * Height;
-
-                float screenRadius = Math.Abs(screenYBottom - screenYCenter);
-                float verticalOffset = screenRadius + 5f * zoomScale;
-                float labelY = (float)Math.Round(screenYCenter + verticalOffset);
-
-                // Measure actual text width/height
                 SizeF textSize;
                 using (Bitmap tempBmp = new Bitmap(1, 1))
                 using (Graphics g = Graphics.FromImage(tempBmp))
@@ -720,17 +721,10 @@ namespace SolarSystemSimulation
 
                 float labelWidth = textSize.Width;
                 float labelHeight = textSize.Height;
-                float labelX = (float)Math.Round(screenX - labelWidth / 2f);
+                float labelX = screenX - labelWidth / 2.0f;
+                float labelY = screenY;
 
-                RenderText(
-                    body.Name,
-                    font,
-                    textColor,
-                    backgroundColor,
-                    labelX,
-                    labelY,
-                    labelWidth,
-                    labelHeight);
+                RenderText(body.Name, font, textColor, backgroundColor, labelX, labelY, labelWidth, labelHeight);
             }
         }
 
