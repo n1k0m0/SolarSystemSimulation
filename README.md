@@ -33,6 +33,9 @@ git clone https://github.com/n1k0m0/SolarSystemSimulation
 ### Controls
 
 - **Arrow Keys:** Adjust zoom and scale.
+- **W/S:** tilt x axis
+- **A/S:** tilt y axis
+- **Q/E:** tilt z axis
 - **Page Up/Down:** Change simulation speed.
 - **F1:** Reset the simulation.
 - **F2:** Toggle planetary data display.
