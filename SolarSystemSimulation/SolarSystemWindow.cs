@@ -719,8 +719,8 @@ namespace SolarSystemSimulation
                     textSize = g.MeasureString(body.Name, font);
                 }
 
-                float labelWidth = textSize.Width;
-                float labelHeight = textSize.Height;
+                float labelWidth = textSize.Width * 1.1f;
+                float labelHeight = textSize.Height * 1.1f;
                 float labelX = screenX - labelWidth / 2.0f;
                 float labelY = screenY;
 
