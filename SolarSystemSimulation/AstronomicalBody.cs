@@ -218,6 +218,7 @@ namespace SolarSystemSimulation
 
             // Render the sphere as a series of triangles and its normals
             GL.Begin(PrimitiveType.TriangleStrip);
+
             for (int i = 0; i < _stacks; i++)
             {
                 for (int j = 0; j <= _slices; j++)

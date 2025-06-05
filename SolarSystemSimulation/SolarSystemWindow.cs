@@ -503,6 +503,9 @@ namespace SolarSystemSimulation
         /// <param name="height"></param>
         private void RenderText(string text, Font font, Color textColor, Color backgroundColor, float x, float y, float width, float height)
         {
+            GL.Disable(EnableCap.Lighting);
+            GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (int)TextureEnvMode.Replace);
+
             using (Bitmap bmp = new Bitmap((int)width, (int)height, System.Drawing.Imaging.PixelFormat.Format32bppArgb))
             {
                 using (Graphics gfx = Graphics.FromImage(bmp))
@@ -551,6 +554,7 @@ namespace SolarSystemSimulation
 
                 GL.Enable(EnableCap.Texture2D);
                 GL.BindTexture(TextureTarget.Texture2D, textureId);
+                
 
                 GL.Begin(PrimitiveType.Quads);
                 GL.TexCoord2(0, 0); GL.Vertex2(x, y);
@@ -572,6 +576,9 @@ namespace SolarSystemSimulation
 
                 GL.DeleteTexture(textureId);
             }
+
+            GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (int)TextureEnvMode.Modulate);
+            GL.Enable(EnableCap.Lighting);
         }
 
         /// <summary>
@@ -581,44 +588,27 @@ namespace SolarSystemSimulation
 
         private void RenderSolarSystem(double time)
         {
-            //Compute the frames per second
             double fps = Math.Round(1000 / time, 0);
-
-            // increase the speed of the simulation
             time *= _speed;
+            _simulatedSeconds += time * 10000;
 
-            // Clear the color and depth buffers
+            GL.Enable(EnableCap.Normalize);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.ClearColor(0f, 0f, 0f, 1f);
 
-            // Set the background color
-            GL.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-            // Draw the background image
             if (_showBackground)
             {
                 DrawBackground();
             }
 
-            // Set the projection matrix
-            Matrix4 projectionMatrix = Matrix4.CreatePerspectiveFieldOfView((float)(Math.PI / 4), 1920.0f / 1080.0f, 1.0f, int.MaxValue);
+            Matrix4 projectionMatrix = Matrix4.CreatePerspectiveFieldOfView(
+                (float)(Math.PI / 4),
+                Width / (float)Height,
+                1f,
+                1e15f);
+
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadMatrix(ref projectionMatrix);
-
-            //view from above
-            Matrix4 modelviewMatrix = Matrix4.LookAt(new Vector3(0, 0, 1) * _zoom, Vector3.Zero, Vector3.UnitX);
-
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadMatrix(ref modelviewMatrix);
-
-            // Set the lighting parameters
-            GL.Enable(EnableCap.Lighting);
-            GL.Enable(EnableCap.Light0);
-            GL.Light(LightName.Light0, LightParameter.Position, new float[] { 0.0f, 0.0f, 0.0f, 1.0f });
-            GL.Light(LightName.Light0, LightParameter.Ambient, new float[] { 1.5f, 1.5f, 1.5f, 1.0f });
-            GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { 0.9f, 0.9f, 0.9f, 1.0f });
-            GL.Light(LightName.Light0, LightParameter.Specular, new float[] { 1.0f, 1.0f, 1.0f, 1.0f });
-
-            _simulatedSeconds += time * 10000;
 
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadIdentity();
@@ -628,20 +618,42 @@ namespace SolarSystemSimulation
             GL.Rotate(_solarSystemTiltY, 0, 1, 0);
             GL.Rotate(_solarSystemTiltZ, 0, 0, 1);
 
-            // Draw each body as a sphere
-            foreach (AstronomicalBody body in _astronomicalBodies)
+            GL.Enable(EnableCap.Lighting);
+            GL.Enable(EnableCap.Light0);
+
+            GL.Light(LightName.Light0, LightParameter.Position, new float[] { 0f, 0f, 0f, 1f });
+            GL.Light(LightName.Light0, LightParameter.Ambient, new float[] { 0.2f, 0.2f, 0.2f, 1f });
+            GL.Light(LightName.Light0, LightParameter.Diffuse, new float[] { 1f, 1f, 0.9f, 1f });
+            GL.Light(LightName.Light0, LightParameter.Specular, new float[] { 1f, 1f, 1f, 1f });
+
+            foreach (var body in _astronomicalBodies)
             {
+                // Optional: make Sun glow instead of reflect light
+                if (body.Name.Equals("Sun", StringComparison.OrdinalIgnoreCase))
+                {
+                    GL.Material(MaterialFace.Front, MaterialParameter.Emission, new float[] { 1.0f, 1.0f, 1.0f, 1.0f });
+                    GL.Material(MaterialFace.Front, MaterialParameter.Ambient, new float[] { 1.0f, 1.0f, 1.0f, 1.0f });
+                    GL.Material(MaterialFace.Front, MaterialParameter.Diffuse, new float[] { 0.6f, 0.6f, 0.2f, 1.0f });
+                    GL.Material(MaterialFace.Front, MaterialParameter.Specular, new float[] { 0.8f, 0.8f, 0.4f, 1.0f });
+                    GL.Material(MaterialFace.Front, MaterialParameter.Shininess, 100.0f);
+                }
+                else
+                {
+                    GL.Material(MaterialFace.Front, MaterialParameter.Emission, new float[] { 0f, 0f, 0f, 1f });
+                    GL.Material(MaterialFace.Front, MaterialParameter.Ambient, new float[] { 0.1f, 0.1f, 0.1f, 1f });
+                    GL.Material(MaterialFace.Front, MaterialParameter.Diffuse, new float[] { 0.8f, 0.8f, 0.8f, 1f });
+                    GL.Material(MaterialFace.Front, MaterialParameter.Specular, new float[] { 0.5f, 0.5f, 0.5f, 1f });
+                    GL.Material(MaterialFace.Front, MaterialParameter.Shininess, 32f);
+                }
+
                 body.DrawTexturedBody(_scale);
             }
 
-            //render labels
             if (_showLabels)
             {
                 RenderAstronomicalBodyLabels();
             }
 
-
-            //show information on the left side
             if (_showData)
             {
                 ShowData(fps);
@@ -683,7 +695,9 @@ namespace SolarSystemSimulation
                 bottomClip = Vector4.Transform(bottomClip, projection);
 
                 if (centerClip.W <= 0 || bottomClip.W <= 0)
+                {
                     continue;
+                }
 
                 Vector3 ndcCenter = new Vector3(centerClip.X, centerClip.Y, centerClip.Z) / centerClip.W;
                 Vector3 ndcBottom = new Vector3(bottomClip.X, bottomClip.Y, bottomClip.Z) / bottomClip.W;
@@ -826,7 +840,7 @@ namespace SolarSystemSimulation
             GL.LoadIdentity();
 
             GL.Enable(EnableCap.Texture2D);
-            GL.BindTexture(TextureTarget.Texture2D, _backgroundTextureId);
+            GL.BindTexture(TextureTarget.Texture2D, _backgroundTextureId);            
 
             GL.Begin(PrimitiveType.Quads);
             GL.TexCoord2(0, 1); GL.Vertex3(-500, -250, -0.9);  // Bottom-left
