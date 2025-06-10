@@ -4,6 +4,8 @@
 
 SolarSystemSimulation is a C# application that visually simulates the motion of celestial bodies in a solar system. The simulation uses **OpenTK** for rendering and physics calculations, displaying planets orbiting the Sun based on real gravitational forces.
 
+<img src="https://github.com/n1k0m0/SolarSystemSimulation/blob/main/screenshots/01.png" height="200"/> <img src="https://github.com/n1k0m0/SolarSystemSimulation/blob/main/screenshots/02.png" height="200"/>
+
 ## Features
 
 - Realistic gravitational physics for planetary motion.
