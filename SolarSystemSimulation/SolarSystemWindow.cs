@@ -343,7 +343,7 @@ namespace SolarSystemSimulation
             else if (keyboardEventArgs.Key == Key.W)
             {
                 _solarSystemTiltX += 2f;
-                if(_solarSystemTiltX > 360)
+                if (_solarSystemTiltX > 360)
                 {
                     _solarSystemTiltX = 0;
                 }
@@ -517,7 +517,7 @@ namespace SolarSystemSimulation
 
                     using (SolidBrush brush = new SolidBrush(textColor))
                     {
-                       gfx.DrawString(text, font, brush, new PointF(5, 5));
+                        gfx.DrawString(text, font, brush, new PointF(5, 5));
                     }
                 }
 
@@ -533,7 +533,7 @@ namespace SolarSystemSimulation
                 bmp.UnlockBits(data);
 
                 // Enable alpha blending and disable depth test
-                GL.Enable(EnableCap.Blend);                              
+                GL.Enable(EnableCap.Blend);
                 GL.Disable(EnableCap.DepthTest);
 
                 GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
@@ -555,7 +555,7 @@ namespace SolarSystemSimulation
 
                 GL.Enable(EnableCap.Texture2D);
                 GL.BindTexture(TextureTarget.Texture2D, textureId);
-                
+
 
                 GL.Begin(PrimitiveType.Quads);
                 GL.TexCoord2(0, 0); GL.Vertex2(x, y);
@@ -567,9 +567,9 @@ namespace SolarSystemSimulation
                 GL.Disable(EnableCap.Texture2D);
 
                 //enable depth test and disable alpha blending
-                GL.Enable(EnableCap.DepthTest);              
+                GL.Enable(EnableCap.DepthTest);
                 GL.Disable(EnableCap.Blend);
-                
+
                 GL.PopMatrix();
                 GL.MatrixMode(MatrixMode.Projection);
                 GL.PopMatrix();
@@ -599,7 +599,7 @@ namespace SolarSystemSimulation
 
             if (_showBackground)
             {
-                DrawBackground();
+                DrawSkyboxCubeBackground();
             }
 
             Matrix4 projectionMatrix = Matrix4.CreatePerspectiveFieldOfView(
@@ -654,7 +654,7 @@ namespace SolarSystemSimulation
 
                 body.DrawTexturedBody(_scale);
             }
-           
+
             if (_showData)
             {
                 ShowData(fps);
@@ -809,50 +809,82 @@ namespace SolarSystemSimulation
             string text = string.Format("FPS: {0}\n\nSimulation time: {1} years, {2} days, {3} hours, {4} minutes\nSimulation speed: {5}\n\n{6}\n\n{7}\n{8}\n{9}", fps, years, days, hours, minutes, _speed.ToString("0.###"), zoomScaleTiltStringBuilder.ToString(), distanceStringBuilder.ToString(), speedStringBuilder.ToString(), positionStringBuilder.ToString());
             RenderText(text, textFont, textColor, backgroundColor, 0, 0, 450, 750);
         }
-
-        /// <summary>
-        /// Draws the background image, e.g. an image of stars
-        /// </summary>
-        private void DrawBackground()
+        private void DrawSkyboxCubeBackground()
         {
             if (_backgroundTextureId == 0)
             {
-                Console.WriteLine("Background texture is not loaded!");
+                Console.WriteLine("Skybox texture not loaded!");
                 return;
             }
 
-            GL.Disable(EnableCap.DepthTest);
+            float size = 1.5e7f;
 
-            // Set Orthographic Projection for 2D background rendering
-            GL.MatrixMode(MatrixMode.Projection);
             GL.PushMatrix();
-            GL.LoadIdentity();
-            GL.Ortho(-500, 500, -250, 250, -1, 1);
 
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.PushMatrix();
+            // only rotation of camera
             GL.LoadIdentity();
+            GL.Rotate(_solarSystemTiltX, 1, 0, 0);
+            GL.Rotate(_solarSystemTiltY, 0, 1, 0);
+            GL.Rotate(_solarSystemTiltZ, 0, 0, 1);
 
+            GL.Disable(EnableCap.Lighting);
             GL.Enable(EnableCap.Texture2D);
-            GL.BindTexture(TextureTarget.Texture2D, _backgroundTextureId);            
+            GL.BindTexture(TextureTarget.Texture2D, _backgroundTextureId);
+            GL.Color3(Color.White);
+            GL.DepthMask(false);
 
+            // front (+Z)
             GL.Begin(PrimitiveType.Quads);
-            GL.TexCoord2(0, 1); GL.Vertex3(-500, -250, -0.9);  // Bottom-left
-            GL.TexCoord2(1, 1); GL.Vertex3(500, -250, -0.9);   // Bottom-right
-            GL.TexCoord2(1, 0); GL.Vertex3(500, 250, -0.9);    // Top-right
-            GL.TexCoord2(0, 0); GL.Vertex3(-500, 250, -0.9);   // Top-left
+            GL.TexCoord2(0, 0); GL.Vertex3(-size, -size, size);
+            GL.TexCoord2(1, 0); GL.Vertex3(size, -size, size);
+            GL.TexCoord2(1, 1); GL.Vertex3(size, size, size);
+            GL.TexCoord2(0, 1); GL.Vertex3(-size, size, size);
             GL.End();
 
+            // back (−Z)
+            GL.Begin(PrimitiveType.Quads);
+            GL.TexCoord2(0, 0); GL.Vertex3(size, -size, -size);
+            GL.TexCoord2(1, 0); GL.Vertex3(-size, -size, -size);
+            GL.TexCoord2(1, 1); GL.Vertex3(-size, size, -size);
+            GL.TexCoord2(0, 1); GL.Vertex3(size, size, -size);
+            GL.End();
+
+            // left Seite (−X)
+            GL.Begin(PrimitiveType.Quads);
+            GL.TexCoord2(0, 0); GL.Vertex3(-size, -size, -size);
+            GL.TexCoord2(1, 0); GL.Vertex3(-size, -size, size);
+            GL.TexCoord2(1, 1); GL.Vertex3(-size, size, size);
+            GL.TexCoord2(0, 1); GL.Vertex3(-size, size, -size);
+            GL.End();
+
+            // right Seite (+X)
+            GL.Begin(PrimitiveType.Quads);
+            GL.TexCoord2(0, 0); GL.Vertex3(size, -size, size);
+            GL.TexCoord2(1, 0); GL.Vertex3(size, -size, -size);
+            GL.TexCoord2(1, 1); GL.Vertex3(size, size, -size);
+            GL.TexCoord2(0, 1); GL.Vertex3(size, size, size);
+            GL.End();
+
+            // top (+Y)
+            GL.Begin(PrimitiveType.Quads);
+            GL.TexCoord2(0, 0); GL.Vertex3(-size, size, size);
+            GL.TexCoord2(1, 0); GL.Vertex3(size, size, size);
+            GL.TexCoord2(1, 1); GL.Vertex3(size, size, -size);
+            GL.TexCoord2(0, 1); GL.Vertex3(-size, size, -size);
+            GL.End();
+
+            // bottom (−Y)
+            GL.Begin(PrimitiveType.Quads);
+            GL.TexCoord2(0, 0); GL.Vertex3(-size, -size, -size);
+            GL.TexCoord2(1, 0); GL.Vertex3(size, -size, -size);
+            GL.TexCoord2(1, 1); GL.Vertex3(size, -size, size);
+            GL.TexCoord2(0, 1); GL.Vertex3(-size, -size, size);
+            GL.End();
+
+            GL.DepthMask(true);
             GL.Disable(EnableCap.Texture2D);
-
-            // Restore Projection Matrix
+            GL.Enable(EnableCap.Lighting);
             GL.PopMatrix();
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.PopMatrix();
-            GL.MatrixMode(MatrixMode.Modelview);
-
-            GL.Enable(EnableCap.DepthTest);
         }
-
     }
 }
